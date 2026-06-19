@@ -1,0 +1,6 @@
+{
+  "name": "Bet Platform",
+  "description": "A premium sportsbook and casino betting platform with a luxurious near-black and gold theme, featuring real-time sports booking, live blackjack, animated slot machine, and fully featured admin back-office panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

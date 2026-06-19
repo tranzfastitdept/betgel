@@ -40,6 +40,7 @@ CREATE TABLE public.wallets (
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE PRIMARY KEY,
     currency VARCHAR(3) DEFAULT 'PHP' CHECK (currency = 'PHP'),
     balance NUMERIC(12, 2) DEFAULT 0.00 NOT NULL CHECK (balance >= 0),
+    grand_lucky_pot NUMERIC(12, 2) DEFAULT 120000.00 NOT NULL,
     pending_deposit NUMERIC(12, 2) DEFAULT 0.00 NOT NULL CHECK (pending_deposit >= 0),
     pending_withdrawal NUMERIC(12, 2) DEFAULT 0.00 NOT NULL CHECK (pending_withdrawal >= 0),
     total_deposited NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
@@ -48,12 +49,12 @@ CREATE TABLE public.wallets (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. DEPOSIT TRANSACTIONS TABLE
+-- 3. DEPOSIT TRANSACTIONS TABLE (GCash Operator Reference validation)
 CREATE TABLE public.deposits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     amount NUMERIC(12, 2) NOT NULL CHECK (amount BETWEEN 20 AND 1000),
-    receipt_url TEXT NOT NULL,
+    reference_number VARCHAR(13) NOT NULL UNIQUE,
     status TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
     admin_notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -214,6 +215,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =========================================================================
+-- LIVE UPGRADE MIGRATION (ALTER TABLE SCRIPTS FOR GCASH REFERENCE CHANGE)
+-- =========================================================================
+-- Paste this script into your Supabase SQL Editor and run it to update schemas:
+
+-- A. Migrate deposits proofs from Receipt URLs to GCash Reference Numbers
+ALTER TABLE public.deposits DROP COLUMN IF EXISTS receipt_url;
+ALTER TABLE public.deposits ADD COLUMN IF NOT EXISTS reference_number VARCHAR(13) NOT NULL UNIQUE;
+
+-- B. Sync core dynamic wallet structures with player lucky pots
+ALTER TABLE public.wallets ADD COLUMN IF NOT EXISTS grand_lucky_pot NUMERIC(12, 2) DEFAULT 120000.00 NOT NULL;
 `;
 
   const envEx = `# =========================================================================

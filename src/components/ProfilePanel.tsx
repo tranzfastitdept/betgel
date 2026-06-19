@@ -13,7 +13,7 @@ interface ProfilePanelProps {
   deposits: Deposit[];
   withdrawals: Withdrawal[];
   onSaveGCash: (details: GCashDetails) => void;
-  onRequestDeposit: (amount: number, receiptUrl: string) => void;
+  onRequestDeposit: (amount: number, referenceNumber: string) => void;
   onRequestWithdrawal: (amount: number) => void;
 }
 
@@ -33,7 +33,7 @@ export default function ProfilePanel({
 
   // Financial Triggers Inputs
   const [depositAmount, setDepositAmount] = useState<number>(100);
-  const [receiptUrl, setReceiptUrl] = useState('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?auto=format&fit=crop&w=300');
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(100);
 
   const handleSaveGCashSubmit = (e: React.FormEvent) => {
@@ -56,11 +56,11 @@ export default function ProfilePanel({
       alert("GCash deposits must strictly range between PHP 20 and PHP 1,000.");
       return;
     }
-    if (!receiptUrl.trim()) {
-      alert("Please designate a mock receipt screenshot URL.");
+    if (!referenceNumber.trim()) {
+      alert("Please enter step-by-step GCash Reference Number (13 digits).");
       return;
     }
-    onRequestDeposit(depositAmount, receiptUrl.trim());
+    onRequestDeposit(depositAmount, referenceNumber.trim());
     alert(`Success! Manual GCash Deposit of PHP ${depositAmount} submitted to Back Office for review.`);
   };
 
@@ -208,7 +208,7 @@ export default function ProfilePanel({
             <ArrowDownRight className="w-4 h-4 text-gold" /> Manual GCash Deposit
           </h3>
           <p className="text-[11px] text-slate-400 leading-normal">
-            Rules: PHP 20 Min - PHP 1000 Max. Submit payment to the admin's number, paste your screenshot reference here.
+            Rules: PHP 20 Min - PHP 1000 Max. Submit payment to the admin's number, then send the reference number for confirmation.
           </p>
 
           <form onSubmit={handleDepositSubmit} className="space-y-3.5" id="deposit-request-form">
@@ -238,22 +238,25 @@ export default function ProfilePanel({
             </div>
 
             <div>
-              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">Mock Receipt Screenshot Link:</label>
+              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">GCash Reference Number:</label>
               <input
-                type="url"
-                value={receiptUrl}
-                onChange={(e) => setReceiptUrl(e.target.value)}
+                type="text"
+                pattern="\d{13}"
+                maxLength={13}
+                placeholder="e.g. 5013148192051"
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value.replace(/\D/g, ''))}
                 className="w-full bg-black border border-white/10 rounded p-2 text-[10px] text-slate-300 font-mono focus:outline-none focus:border-gold"
                 required
               />
-              <span className="block text-[9px] text-slate-500 font-mono mt-1">Prefilled with live dummy invoice.</span>
+              <span className="block text-[9px] text-slate-500 font-mono mt-1">Provide the exact 13-digit reference code on GCash.</span>
             </div>
 
             <button
               type="submit"
               className="w-full py-2.5 bg-gradient-to-r from-gold to-gold-dark text-black font-sans font-extrabold text-xs rounded-xl shadow-gold-sm hover:opacity-90 transition cursor-pointer"
             >
-              TRANSMIT PAYMENT PROOF
+              TRANSMIT REFERENCE NUMBER
             </button>
           </form>
         </div>

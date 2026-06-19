@@ -14,13 +14,15 @@ interface SportsBookProps {
   onAddMatch: (match: Omit<Match, 'id' | 'createdAt'>) => void;
   onSettleMatch: (matchId: string, result: 'Won_A' | 'Won_B' | 'Draw' | 'Void') => void;
   currentUserRole: 'admin' | 'user';
+  onRedirectToTopup?: () => void;
 }
 
-export default function SportsBook({ balance, matches, onPlaceBet, onAddMatch, onSettleMatch, currentUserRole }: SportsBookProps) {
+export default function SportsBook({ balance, matches, onPlaceBet, onAddMatch, onSettleMatch, currentUserRole, onRedirectToTopup }: SportsBookProps) {
   // Betting Slip State
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedOutcome, setSelectedOutcome] = useState<'A' | 'B' | 'Draw' | null>(null);
   const [stake, setStake] = useState<number>(100);
+  const [showWarning, setShowWarning] = useState<boolean>(false);
   
   // Custom Create Match Inputs (Simulation/Admin)
   const [sport, setSport] = useState<Match['sport']>('Basketball');
@@ -56,7 +58,7 @@ export default function SportsBook({ balance, matches, onPlaceBet, onAddMatch, o
   const handleConfirmBetSlip = () => {
     if (!selectedMatch || !selectedOutcome) return;
     if (balance < stake) {
-      alert("Insufficient wallet balance for this stake size.");
+      setShowWarning(true);
       return;
     }
     if (stake < 10) {
@@ -109,7 +111,42 @@ export default function SportsBook({ balance, matches, onPlaceBet, onAddMatch, o
   };
 
   return (
-    <div className="space-y-6" id="sportsbook-view">
+    <div className="space-y-6 relative" id="sportsbook-view">
+      {/* Insufficient balance modal */}
+      {showWarning && (
+        <div className="absolute inset-0 bg-[#050505]/95 z-30 rounded-2xl p-6 flex flex-col justify-center items-center text-center space-y-4 border border-red-500/30">
+          <div className="w-12 h-12 rounded-full bg-red-400/10 border border-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+            <Calendar className="w-6 h-6 animate-none" />
+          </div>
+          <div>
+            <h4 className="text-md font-sans font-black text-rose-500 uppercase tracking-tight">
+              INSOLVENT FUNDS WARNING
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
+              Your wallet balance is insufficient to place a ₱{stake} wager. Please top up your active PHP balance.
+            </p>
+          </div>
+          <div className="flex gap-2.5 w-full max-w-xs">
+            {onRedirectToTopup && (
+              <button
+                onClick={() => {
+                  setShowWarning(false);
+                  onRedirectToTopup();
+                }}
+                className="flex-1 py-2.5 bg-gradient-to-r from-gold to-gold-dark text-black font-sans font-black text-xs rounded-xl shadow-gold hover:opacity-90 transition cursor-pointer"
+              >
+                Top-up GCash
+              </button>
+            )}
+            <button
+              onClick={() => setShowWarning(false)}
+              className="flex-1 py-2.5 bg-zinc-800 text-slate-300 hover:text-white font-sans font-bold text-xs rounded-xl transition cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {/* Top Interactive Panel */}
       <div className="bg-[#141414] p-6 rounded-2xl border border-gold/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

@@ -10,6 +10,7 @@ interface BlackjackGameProps {
   balance: number;
   onUpdateBalance: (amount: number, auditAction: string, auditDetail: string) => void;
   onLogGame: (bet: number, win: number, playerHand: string[], dealerHand: string[], status: 'Won' | 'Lost' | 'Push' | 'Blackjack') => void;
+  onRedirectToTopup?: () => void;
 }
 
 interface Card {
@@ -35,7 +36,7 @@ const RANKS = [
   { rank: 'K', value: 10 }
 ];
 
-export default function BlackjackGame({ balance, onUpdateBalance, onLogGame }: BlackjackGameProps) {
+export default function BlackjackGame({ balance, onUpdateBalance, onLogGame, onRedirectToTopup }: BlackjackGameProps) {
   const [bet, setBet] = useState<number>(50);
   const [deck, setDeck] = useState<Card[]>([]);
   const [playerCards, setPlayerCards] = useState<Card[]>([]);
@@ -45,6 +46,7 @@ export default function BlackjackGame({ balance, onUpdateBalance, onLogGame }: B
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [showRules, setShowRules] = useState<boolean>(false);
   const [currentBetLevel, setCurrentBetLevel] = useState<number>(0);
+  const [showWarning, setShowWarning] = useState<boolean>(false);
 
   // Sound generator
   const playSynthesizedSound = (type: 'deal' | 'win' | 'lose' | 'alert') => {
@@ -139,7 +141,7 @@ export default function BlackjackGame({ balance, onUpdateBalance, onLogGame }: B
     if (gameState === 'player_turn' || gameState === 'dealer_turn') return;
     if (balance < bet) {
       playSynthesizedSound('alert');
-      alert("Insufficient wallet balance for this blackjack bet.");
+      setShowWarning(true);
       return;
     }
 
@@ -304,6 +306,41 @@ export default function BlackjackGame({ balance, onUpdateBalance, onLogGame }: B
 
   return (
     <div className="bg-[#141414] p-6 rounded-2xl border border-gold/20 shadow-2xl relative" id="blackjack-terminal">
+      {/* Dynamic top-up warning screen */}
+      {showWarning && (
+        <div className="absolute inset-0 bg-black/95 z-30 rounded-2xl p-6 flex flex-col justify-center items-center text-center space-y-4 border border-red-500/30">
+          <div className="w-12 h-12 rounded-full bg-red-400/10 border border-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+            <AlertTriangle className="w-6 h-6 animate-none" />
+          </div>
+          <div>
+            <h4 className="text-md font-sans font-black text-rose-500 uppercase tracking-tight">
+              TOP-UP REQUIRED
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
+              Your wallet balance is insufficient to place a ₱{bet} blackjack bet. Your active balance is ₱{balance.toFixed(2)}. Go to the profile page to deposit PHP funds.
+            </p>
+          </div>
+          <div className="flex gap-2.5 w-full max-w-xs">
+            {onRedirectToTopup && (
+              <button
+                onClick={() => {
+                  setShowWarning(false);
+                  onRedirectToTopup();
+                }}
+                className="flex-1 py-2.5 bg-gradient-to-r from-gold to-gold-dark text-black font-sans font-black text-xs rounded-xl shadow-gold hover:opacity-90 transition cursor-pointer"
+              >
+                Top-up GCash
+              </button>
+            )}
+            <button
+              onClick={() => setShowWarning(false)}
+              className="flex-1 py-2.5 bg-zinc-800 text-slate-300 hover:text-white font-sans font-bold text-xs rounded-xl transition cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {/* HUD Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gold/10">
         <div className="flex items-center gap-2">

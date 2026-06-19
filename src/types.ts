@@ -22,6 +22,7 @@ export interface Wallet {
   totalDeposited: number;
   totalWithdrawn: number;
   lifetimeProfitLoss: number;
+  grandLuckyPot?: number;
 }
 
 export interface GCashDetails {
@@ -66,7 +67,7 @@ export interface Deposit {
   userId: string;
   username: string;
   amount: number;
-  receiptUrl: string;
+  referenceNumber: string;
   status: 'Pending' | 'Approved' | 'Rejected';
   createdAt: string;
   adminNotes?: string;
